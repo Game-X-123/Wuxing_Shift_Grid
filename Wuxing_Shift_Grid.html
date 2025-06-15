@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五行相生相克游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a237e, #311b92, #4a148c);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #f0f0f0;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            width: 100%;
+            max-width: 900px;
+            border-radius: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            text-shadow: 0 2px 8px rgba(0, 255, 255, 0.7);
+            margin-bottom: 15px;
+            background: linear-gradient(to right, #4fc3f7, #00bcd4, #18ffff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            width: 100%;
+        }
+        
+        .info-item {
+            text-align: center;
+            font-size: 1.2rem;
+            padding: 5px 15px;
+            border-radius: 8px;
+            background: rgba(0, 150, 136, 0.3);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .game-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 40px;
+            margin: 20px 0;
+            width: 100%;
+            max-width: 900px;
+        }
+        
+        .board-container {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+        
+        .board-title {
+            text-align: center;
+            font-size: 1.6rem;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+            padding: 8px;
+            background: rgba(33, 33, 33, 0.5);
+            border-radius: 8px;
+            border: 1px solid rgba(100, 255, 255, 0.4);
+        }
+        
+        .board {
+            display: grid;
+            grid-template-columns: repeat(5, 70px);
+            grid-template-rows: repeat(5, 70px);
+            gap: 8px;
+        }
+        
+        .target-board-container {
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        .cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 2.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 2px 3px rgba(0, 0, 0, 0.7);
+            user-select: none;
+        }
+        
+        .initial-board .cell:hover {
+            transform: scale(1.05);
+            box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.8);
+        }
+        
+        .metal { background: radial-gradient(circle at 30% 30%, #e0e0e0, #b3b3b3, #757575); }
+        .wood { background: radial-gradient(circle at 30% 30%, #a5d6a7, #66bb6a, #2e7d32); }
+        .water { background: radial-gradient(circle at 30% 30%, #81d4fa, #29b6f6, #0288d1); }
+        .fire { background: radial-gradient(circle at 30% 30%, #ffcc80, #ffa726, #f57c00); }
+        .earth { background: radial-gradient(circle at 30% 30%, #d7ccc8, #a1887f, #795548); }
+        .empty { background: radial-gradient(circle at 30% 30%, #455a64, #263238, #1c313a); }
+        
+        .actions {
+            margin: 25px 0;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 12px 28px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            color: #212121;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+            min-width: 150px;
+        }
+        
+        #reset-op-btn { background: linear-gradient(to right, #ef5350, #f44336); color: white; }
+        #new-game-btn { background: linear-gradient(to right, #66bb6a, #4caf50); color: white; }
+        #check-btn { background: linear-gradient(to right, #42a5f5, #2196f3); color: white; }
+        #undo-btn { background: linear-gradient(to right, #ffca28, #ffc107); color: #212121; }
+        
+        button:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .instructions {
+            margin: 15px 0;
+            font-weight: bold;
+            font-size: 1.3rem;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px 25px;
+            border-radius: 50px;
+            text-align: center;
+            width: 100%;
+            max-width: 700px;
+            border: 1px solid rgba(100, 255, 255, 0.4);
+        }
+        
+        .info-panel {
+            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 900px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .element-info {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .element-card {
+            width: 120px;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-size: 1.1rem;
+            transition: transform 0.3s;
+        }
+        
+        .element-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .metal-card { border: 2px solid #b3b3b3; }
+        .wood-card { border: 2px solid #66bb6a; }
+        .water-card { border: 2px solid #29b6f6; }
+        .fire-card { border: 2px solid #ffa726; }
+        .earth-card { border: 2px solid #a1887f; }
+        
+        .selected {
+            box-shadow: 0 0 0 4px #ffeb3b, inset 0 0 20px rgba(255, 235, 59, 0.8);
+        }
+        
+        .animation {
+            animation: pop 0.5s ease;
+        }
+        
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        .rule-diagram {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 25px 0;
+            flex-wrap: wrap;
+        }
+        
+        .relations {
+            display: grid;
+            grid-template-columns: repeat(5, 80px);
+            grid-template-rows: repeat(5, 80px);
+            align-items: center;
+            justify-items: center;
+        }
+        
+        .rel-item {
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 1.8rem;
+        }
+        
+        .rel-arrow {
+            font-size: 1.8rem;
+            width: 40px;
+            text-align: center;
+        }
+        
+        .sheng { color: #4caf50; }
+        .ke { color: #f44336; }
+        
+        .action-tip {
+            font-size: 1.1rem;
+            margin-top: 5px;
+            color: #81d4fa;
+        }
+        
+        .success {
+            background: rgba(76, 175, 80, 0.5);
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
+        }
+        
+        .level-indicator {
+            background: linear-gradient(45deg, #ff4081, #7c4dff);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            margin-top: 10px;
+            display: inline-block;
+        }
+        
+        .counter {
+            display: inline-block;
+            background: rgba(255, 64, 129, 0.3);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            margin: 0 5px;
+        }
+        
+        .local-actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+        
+        .local-actions button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            min-width: 120px;
+        }
+        
+        #reset-op-btn { background: linear-gradient(to right, #ef9a9a, #ef5350); }
+        #undo-btn { background: linear-gradient(to right, #fff59d, #ffeb3b); }
+        
+        .board-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .board-title-container {
+            flex-grow: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .board {
+                grid-template-columns: repeat(5, 55px);
+                grid-template-rows: repeat(5, 55px);
+            }
+            
+            .cell {
+                font-size: 1.7rem;
+            }
+            
+            .game-container {
+                gap: 20px;
+            }
+            
+            .element-card {
+                width: 100px;
+                padding: 8px;
+                font-size: 1rem;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .board-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .local-actions {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>五行相生相克游戏</h1>
+        <div class="game-info">
+            <div class="info-item">步数: <span id="move-count">0</span></div>
+            <div class="info-item">当前等级: <span class="level-indicator"><span class="counter">1</span></span></div>
+            <div class="info-item">剩余撤回: <span id="undo-count">5</span></div>
+        </div>
+    </div>
+    
+    <div class="instructions">
+        <p id="instruction-text">请点击第一个元素...</p>
+        <div class="action-tip">提示：点击两个相邻元素应用五行规则</div>
+    </div>
+    
+    <div class="game-container">
+        <div class="board-container">
+            <div class="board-header">
+                <div class="board-title-container">
+                    <div class="board-title">操作盘面</div>
+                </div>
+                <div class="local-actions">
+                    <button id="undo-btn">撤回操作</button>
+                    <button id="reset-op-btn">重置盘面</button>
+                </div>
+            </div>
+            <div id="initial-board" class="board initial-board"></div>
+        </div>
+        
+        <div class="board-container target-board-container">
+            <div class="board-title">目标盘面</div>
+            <div id="target-board" class="board"></div>
+        </div>
+    </div>
+    
+    <div class="actions">
+        <button id="new-game-btn">新游戏</button>
+        <button id="check-btn">检查完成</button>
+    </div>
+    
+    <div class="info-panel">
+        <h3>五行关系图</h3>
+        
+        <div class="rule-diagram">
+            <div class="relations">
+                <div class="rel-item metal">金</div>
+                <div class="rel-arrow sheng">→</div>
+                <div class="rel-item water">水</div>
+                <div class="rel-arrow ke">←</div>
+                <div class="rel-item wood">木</div>
+                
+                <div class="rel-arrow ke">↑</div>
+                <div></div>
+                <div class="rel-arrow ke">↑</div>
+                <div></div>
+                <div class="rel-arrow ke">↓</div>
+                
+                <div class="rel-item fire">火</div>
+                <div class="rel-arrow sheng">←</div>
+                <div class="rel-item wood">木</div>
+                <div class="rel-arrow sheng">→</div>
+                <div class="rel-item earth">土</div>
+                
+                <div></div>
+                <div class="rel-arrow ke">↓</div>
+                <div></div>
+                <div class="rel-arrow sheng">↑</div>
+                <div></div>
+                
+                <div class="rel-item earth">土</div>
+                <div class="rel-arrow sheng">→</div>
+                <div class="rel-item metal">金</div>
+                <div class="rel-arrow ke">←</div>
+                <div class="rel-item water">水</div>
+            </div>
+        </div>
+        
+        <div class="element-info">
+            <div class="element-card metal-card metal">金 (金克木，金生水)</div>
+            <div class="element-card wood-card wood">木 (木克土，木生火)</div>
+            <div class="element-card water-card water">水 (水克火，水生木)</div>
+            <div class="element-card fire-card fire">火 (火克金，火生土)</div>
+            <div class="element-card earth-card earth">土 (土克水，土生金)</div>
+        </div>
+    </div>
+
+    <script>
+        // 五行元素和对应符号
+        const ELEMENTS = {
+            metal: '金',
+            wood: '木',
+            water: '水',
+            fire: '火',
+            earth: '土'
+        };
+        
+        // 相克关系：key克制value
+        const RESTRAIN_RELATIONS = {
+            metal: 'wood',
+            wood: 'earth',
+            earth: 'water',
+            water: 'fire',
+            fire: 'metal'
+        };
+        
+        // 相生关系：key生value
+        const GENERATE_RELATIONS = {
+            metal: 'water',
+            water: 'wood',
+            wood: 'fire',
+            fire: 'earth',
+            earth: 'metal'
+        };
+        
+        // 元素符号和类名映射
+        const ELEMENT_MAP = {
+            '金': 'metal',
+            '木': 'wood',
+            '水': 'water',
+            '火': 'fire',
+            '土': 'earth'
+        };
+        
+        // 游戏状态
+        const gameState = {
+            initialBoard: [],
+            currentBoard: [],    // 当前操作盘面
+            targetBoard: [],
+            firstSelected: null,
+            moves: 0,
+            level: 1,
+            undos: 5,
+            history: [],
+            gameOver: false,
+            gameStartState: null  // 游戏开始时操作盘面的状态
+        };
+        
+        // 初始化游戏
+        function initGame() {
+            // 清空棋盘
+            document.getElementById('initial-board').innerHTML = '';
+            document.getElementById('target-board').innerHTML = '';
+            
+            // 生成初始状态
+            gameState.initialBoard = generateRandomBoard();
+            // 当前操作盘面初始化为初始状态
+            gameState.currentBoard = gameState.initialBoard.map(row => [...row]);
+            // 生成目标盘面
+            gameState.targetBoard = generateTargetBoard();
+            
+            // 重置状态
+            gameState.firstSelected = null;
+            gameState.moves = 0;
+            gameState.undos = 5;
+            gameState.history = [];
+            gameState.gameOver = false;
+            
+            // 保存游戏开始状态
+            gameState.gameStartState = JSON.parse(JSON.stringify(gameState.currentBoard));
+            
+            // 更新棋盘UI
+            renderBoard('initial-board', gameState.currentBoard, true);
+            renderBoard('target-board', gameState.targetBoard, false);
+            
+            // 更新指令文本
+            document.getElementById('instruction-text').textContent = '请点击第一个元素...';
+            document.getElementById('move-count').textContent = '0';
+            document.getElementById('undo-count').textContent = gameState.undos;
+            document.querySelector('.counter').textContent = gameState.level;
+        }
+        
+        // 生成随机棋盘
+        function generateRandomBoard() {
+            const board = [];
+            const elements = Object.keys(ELEMENTS);
+            
+            for (let row = 0; row < 5; row++) {
+                const rowArr = [];
+                for (let col = 0; col < 5; col++) {
+                    const randomElement = elements[Math.floor(Math.random() * elements.length)];
+                    rowArr.push(ELEMENTS[randomElement]);
+                }
+                board.push(rowArr);
+            }
+            return board;
+        }
+        
+        // 生成目标棋盘
+        function generateTargetBoard() {
+            // 创建一个新盘面
+            const board = [];
+            
+            // 复制初始盘面
+            for (let row = 0; row < 5; row++) {
+                board[row] = [...gameState.initialBoard[row]];
+            }
+            
+            // 进行10次操作
+            for (let i = 0; i < 10; i++) {
+                // 尝试找到一个可操作的位置
+                let row, col, direction;
+                let valid = false;
+                let attempts = 0;
+                
+                while (!valid && attempts < 100) {
+                    row = Math.floor(Math.random() * 5);
+                    col = Math.floor(Math.random() * 5);
+                    
+                    // 随机选择一个相邻方向：上、下、左、右
+                    const directions = [
+                        {r: -1, c: 0},  // 上
+                        {r: 1, c: 0},   // 下
+                        {r: 0, c: -1},  // 左
+                        {r: 0, c: 1}    // 右
+                    ];
+                    
+                    direction = directions[Math.floor(Math.random() * directions.length)];
+                    
+                    const newRow = row + direction.r;
+                    const newCol = col + direction.c;
+                    
+                    // 检查是否在边界内
+                    if (newRow >= 0 && newRow < 5 && newCol >= 0 && newCol < 5) {
+                        valid = true;
+                        
+                        // 应用规则（模拟操作）
+                        const element1 = board[row][col];
+                        const element2 = board[newRow][newCol];
+                        
+                        // 相同元素
+                        if (element1 === element2) {
+                            // 后点击位置生成相生元素
+                            const elemType = Object.keys(ELEMENTS).find(key => ELEMENTS[key] === element1);
+                            board[newRow][newCol] = ELEMENTS[GENERATE_RELATIONS[elemType]];
+                            board[row][col] = null;
+                        } 
+                        // 相克关系
+                        else if (RESTRAIN_RELATIONS[ELEMENT_MAP[element1]] === ELEMENT_MAP[element2]) {
+                            board[newRow][newCol] = element1;
+                            board[row][col] = null;
+                        } 
+                        else if (RESTRAIN_RELATIONS[ELEMENT_MAP[element2]] === ELEMENT_MAP[element1]) {
+                            board[newRow][newCol] = element2;
+                            board[row][col] = null;
+                        }
+                        // 相生关系
+                        else if (GENERATE_RELATIONS[ELEMENT_MAP[element1]] === ELEMENT_MAP[element2]) {
+                            // 交换位置
+                            [board[row][col], board[newRow][newCol]] = [board[newRow][newCol], board[row][col]];
+                        } 
+                        else if (GENERATE_RELATIONS[ELEMENT_MAP[element2]] === ELEMENT_MAP[element1]) {
+                            // 交换位置
+                            [board[row][col], board[newRow][newCol]] = [board[newRow][newCol], board[row][col]];
+                        }
+                        // 无效操作 - 重试
+                        else {
+                            valid = false;
+                        }
+                    } else {
+                        valid = false;
+                    }
+                    
+                    attempts++;
+                }
+            }
+            
+            return board;
+        }
+        
+        // 渲染棋盘
+        function renderBoard(boardId, boardData, clickable) {
+            const boardElement = document.getElementById(boardId);
+            boardElement.innerHTML = '';
+            
+            for (let row = 0; row < 5; row++) {
+                for (let col = 0; col < 5; col++) {
+                    const element = boardData[row][col];
+                    const cell = document.createElement('div');
+                    
+                    if (element) {
+                        const elemClass = ELEMENT_MAP[element];
+                        cell.className = `cell ${elemClass}`;
+                        cell.textContent = element;
+                    } else {
+                        cell.className = `cell empty`;
+                    }
+                    
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    
+                    if (clickable) {
+                        cell.addEventListener('click', () => handleCellClick(row, col));
+                    }
+                    
+                    boardElement.appendChild(cell);
+                }
+            }
+        }
+        
+        // 处理格子点击
+        function handleCellClick(row, col) {
+            if (gameState.gameOver) return;
+            
+            const cell = findCell(row, col, 'initial-board');
+            
+            // 第一次选择或重新选择
+            if (!gameState.firstSelected) {
+                gameState.firstSelected = {row, col};
+                cell.classList.add('selected');
+                updateInstruction(`已选择 ${gameState.currentBoard[row][col]}，请点击相邻元素`);
+            } 
+            // 第二次选择
+            else {
+                const first = gameState.firstSelected;
+                const second = {row, col};
+                
+                // 检查是否选择相同的格子
+                if (first.row === second.row && first.col === second.col) {
+                    updateInstruction('不能选择相同的格子，请重新选择');
+                    return;
+                }
+                
+                // 保存操作前状态（用于撤回）
+                saveGameState();
+                
+                // 检查是否相邻
+                if (isAdjacent(first, second)) {
+                    // 应用游戏规则
+                    applyRules(first, second);
+                } else {
+                    updateInstruction('位置不相邻，请重新选择第一元素');
+                }
+                
+                // 重置选择状态
+                const firstCell = findCell(first.row, first.col, 'initial-board');
+                if (firstCell) firstCell.classList.remove('selected');
+                gameState.firstSelected = null;
+            }
+        }
+        
+        // 检查两个格子是否相邻
+        function isAdjacent(first, second) {
+            const rowDiff = Math.abs(first.row - second.row);
+            const colDiff = Math.abs(first.col - second.col);
+            return (rowDiff === 0 && colDiff === 1) || (rowDiff === 1 && colDiff === 0);
+        }
+        
+        // 应用游戏规则
+        function applyRules(first, second) {
+            const board = gameState.currentBoard;
+            const element1 = board[first.row][first.col];
+            const element2 = board[second.row][second.col];
+            
+            if (!element1 || !element2) {
+                updateInstruction('无效操作：请选择有元素的格子');
+                return;
+            }
+            
+            // 相同元素
+            if (element1 === element2) {
+                const elemType = Object.keys(ELEMENTS).find(key => ELEMENTS[key] === element1);
+                board[first.row][first.col] = null;
+                board[second.row][second.col] = ELEMENTS[GENERATE_RELATIONS[elemType]];
+                updateInstruction(`相生操作：在${element2}位置生成${board[second.row][second.col]}`);
+            } 
+            // 相克关系
+            else if (RESTRAIN_RELATIONS[ELEMENT_MAP[element1]] === ELEMENT_MAP[element2]) {
+                board[second.row][second.col] = element1;
+                board[first.row][first.col] = null;
+                updateInstruction(`相克操作：${element1}克制${element2}`);
+            } 
+            else if (RESTRAIN_RELATIONS[ELEMENT_MAP[element2]] === ELEMENT_MAP[element1]) {
+                board[second.row][second.col] = element2;
+                board[first.row][first.col] = null;
+                updateInstruction(`相克操作：${element2}克制${element1}`);
+            }
+            // 相生关系
+            else if (GENERATE_RELATIONS[ELEMENT_MAP[element1]] === ELEMENT_MAP[element2]) {
+                // 交换位置
+                [board[first.row][first.col], board[second.row][second.col]] = [element2, element1];
+                updateInstruction(`相生操作：${element1}和${element2}交换位置`);
+            } 
+            else if (GENERATE_RELATIONS[ELEMENT_MAP[element2]] === ELEMENT_MAP[element1]) {
+                // 交换位置
+                [board[first.row][first.col], board[second.row][second.col]] = [element2, element1];
+                updateInstruction(`相生操作：${element2}和${element1}交换位置`);
+            } 
+            // 无效操作
+            else {
+                updateInstruction('无效操作：不符合五行规则');
+                return;
+            }
+            
+            // 成功操作
+            gameState.moves++;
+            document.getElementById('move-count').textContent = gameState.moves;
+            
+            // 更新棋盘并添加动画效果
+            renderBoard('initial-board', gameState.currentBoard, true);
+            
+            // 检查是否胜利
+            setTimeout(checkWin, 200);
+        }
+        
+        // 更新指令文本
+        function updateInstruction(text) {
+            document.getElementById('instruction-text').textContent = text;
+        }
+        
+        // 查找对应的单元格
+        function findCell(row, col, boardId) {
+            return document.querySelector(`#${boardId} .cell[data-row="${row}"][data-col="${col}"]`);
+        }
+        
+        // 保存当前游戏状态
+        function saveGameState() {
+            const state = [];
+            for (let row = 0; row < 5; row++) {
+                state[row] = [...gameState.currentBoard[row]];
+            }
+            gameState.history.push(JSON.stringify(state));
+            
+            // 最多保留最近5步
+            if (gameState.history.length > 5) {
+                gameState.history.shift();
+            }
+        }
+        
+        // 撤回操作
+        function undoMove() {
+            if (gameState.gameOver) return;
+            if (gameState.history.length === 0) {
+                updateInstruction('无法撤回：没有操作历史');
+                return;
+            }
+            if (gameState.undos <= 0) {
+                updateInstruction('撤回次数已用完');
+                return;
+            }
+            
+            const prevState = JSON.parse(gameState.history.pop());
+            gameState.currentBoard = prevState;
+            gameState.moves--;
+            gameState.undos--;
+            
+            renderBoard('initial-board', gameState.currentBoard, true);
+            document.getElementById('move-count').textContent = gameState.moves;
+            document.getElementById('undo-count').textContent = gameState.undos;
+            updateInstruction('已撤回上一步操作');
+            
+            // 重置选择状态
+            gameState.firstSelected = null;
+        }
+        
+        // 重置操作盘面到游戏初始状态
+        function resetOperationBoard() {
+            if (gameState.gameOver) return;
+            
+            // 恢复为游戏开始状态
+            gameState.currentBoard = JSON.parse(JSON.stringify(gameState.gameStartState));
+            gameState.moves = 0;
+            gameState.undos = 5;
+            gameState.history = [];
+            
+            // 更新UI
+            renderBoard('initial-board', gameState.currentBoard, true);
+            
+            document.getElementById('move-count').textContent = '0';
+            document.getElementById('undo-count').textContent = gameState.undos;
+            updateInstruction('操作盘面已重置到初始状态');
+        }
+        
+        // 检查是否胜利
+        function checkWin() {
+            for (let row = 0; row < 5; row++) {
+                for (let col = 0; col < 5; col++) {
+                    if (gameState.currentBoard[row][col] !== gameState.targetBoard[row][col]) {
+                        return false;
+                    }
+                }
+            }
+            
+            // 找到所有目标盘面元素
+            document.querySelectorAll('#target-board .cell').forEach(cell => {
+                cell.classList.add('success');
+            });
+            
+            gameState.gameOver = true;
+            gameState.level++;
+            
+            updateInstruction(`恭喜！完成目标！步数：${gameState.moves}`);
+            alert(`恭喜你完成任务！使用了 ${gameState.moves} 步操作。下一关：等级${gameState.level}`);
+            
+            // 重置选择状态
+            gameState.firstSelected = null;
+            
+            return true;
+        }
+        
+        // 手动检查胜利
+        function manualCheckWin() {
+            if (checkWin()) {
+                return;
+            }
+            alert('尚未完成目标，请继续努力！');
+        }
+        
+        // 页面加载完成后初始化游戏
+        document.addEventListener('DOMContentLoaded', () => {
+            // 初始化游戏
+            initGame();
+            
+            // 绑定按钮事件
+            document.getElementById('undo-btn').addEventListener('click', undoMove);
+            document.getElementById('reset-op-btn').addEventListener('click', resetOperationBoard);
+            document.getElementById('new-game-btn').addEventListener('click', initGame);
+            document.getElementById('check-btn').addEventListener('click', manualCheckWin);
+        });
+    </script>
+</body>
+</html>
