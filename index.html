@@ -232,41 +232,6 @@
             100% { transform: scale(1); }
         }
         
-        .rule-diagram {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 25px 0;
-            flex-wrap: wrap;
-        }
-        
-        .relations {
-            display: grid;
-            grid-template-columns: repeat(5, 80px);
-            grid-template-rows: repeat(5, 80px);
-            align-items: center;
-            justify-items: center;
-        }
-        
-        .rel-item {
-            width: 70px;
-            height: 70px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            font-size: 1.8rem;
-        }
-        
-        .rel-arrow {
-            font-size: 1.8rem;
-            width: 40px;
-            text-align: center;
-        }
-        
-        .sheng { color: #4caf50; }
-        .ke { color: #f44336; }
-        
         .action-tip {
             font-size: 1.1rem;
             margin-top: 5px;
@@ -278,7 +243,7 @@
             box-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
         }
         
-        .level-indicator {
+        .games-indicator {
             background: linear-gradient(45deg, #ff4081, #7c4dff);
             color: white;
             padding: 8px 20px;
@@ -365,8 +330,7 @@
         <h1>五行相生相克游戏</h1>
         <div class="game-info">
             <div class="info-item">步数: <span id="move-count">0</span></div>
-            <div class="info-item">当前等级: <span class="level-indicator"><span class="counter">1</span></span></div>
-            <div class="info-item">剩余撤回: <span id="undo-count">5</span></div>
+            <div class="info-item">已完成局数: <span class="games-indicator"><span id="completed-games" class="counter">0</span></span></div>
         </div>
     </div>
     
@@ -401,42 +365,7 @@
     </div>
     
     <div class="info-panel">
-        <h3>五行关系图</h3>
-        
-        <div class="rule-diagram">
-            <div class="relations">
-                <div class="rel-item metal">金</div>
-                <div class="rel-arrow sheng">→</div>
-                <div class="rel-item water">水</div>
-                <div class="rel-arrow ke">←</div>
-                <div class="rel-item wood">木</div>
-                
-                <div class="rel-arrow ke">↑</div>
-                <div></div>
-                <div class="rel-arrow ke">↑</div>
-                <div></div>
-                <div class="rel-arrow ke">↓</div>
-                
-                <div class="rel-item fire">火</div>
-                <div class="rel-arrow sheng">←</div>
-                <div class="rel-item wood">木</div>
-                <div class="rel-arrow sheng">→</div>
-                <div class="rel-item earth">土</div>
-                
-                <div></div>
-                <div class="rel-arrow ke">↓</div>
-                <div></div>
-                <div class="rel-arrow sheng">↑</div>
-                <div></div>
-                
-                <div class="rel-item earth">土</div>
-                <div class="rel-arrow sheng">→</div>
-                <div class="rel-item metal">金</div>
-                <div class="rel-arrow ke">←</div>
-                <div class="rel-item water">水</div>
-            </div>
-        </div>
-        
+        <h3>五行元素说明</h3>
         <div class="element-info">
             <div class="element-card metal-card metal">金 (金克木，金生水)</div>
             <div class="element-card wood-card wood">木 (木克土，木生火)</div>
@@ -490,9 +419,8 @@
             targetBoard: [],
             firstSelected: null,
             moves: 0,
-            level: 1,
-            undos: 5,
-            history: [],
+            completedGames: 0,   // 已完成局数
+            history: [],        // 操作历史
             gameOver: false,
             gameStartState: null  // 游戏开始时操作盘面的状态
         };
@@ -513,7 +441,6 @@
             // 重置状态
             gameState.firstSelected = null;
             gameState.moves = 0;
-            gameState.undos = 5;
             gameState.history = [];
             gameState.gameOver = false;
             
@@ -527,8 +454,7 @@
             // 更新指令文本
             document.getElementById('instruction-text').textContent = '请点击第一个元素...';
             document.getElementById('move-count').textContent = '0';
-            document.getElementById('undo-count').textContent = gameState.undos;
-            document.querySelector('.counter').textContent = gameState.level;
+            document.getElementById('completed-games').textContent = gameState.completedGames;
         }
         
         // 生成随机棋盘
@@ -781,11 +707,6 @@
                 state[row] = [...gameState.currentBoard[row]];
             }
             gameState.history.push(JSON.stringify(state));
-            
-            // 最多保留最近5步
-            if (gameState.history.length > 5) {
-                gameState.history.shift();
-            }
         }
         
         // 撤回操作
@@ -795,19 +716,13 @@
                 updateInstruction('无法撤回：没有操作历史');
                 return;
             }
-            if (gameState.undos <= 0) {
-                updateInstruction('撤回次数已用完');
-                return;
-            }
             
             const prevState = JSON.parse(gameState.history.pop());
             gameState.currentBoard = prevState;
             gameState.moves--;
-            gameState.undos--;
             
             renderBoard('initial-board', gameState.currentBoard, true);
             document.getElementById('move-count').textContent = gameState.moves;
-            document.getElementById('undo-count').textContent = gameState.undos;
             updateInstruction('已撤回上一步操作');
             
             // 重置选择状态
@@ -821,14 +736,12 @@
             // 恢复为游戏开始状态
             gameState.currentBoard = JSON.parse(JSON.stringify(gameState.gameStartState));
             gameState.moves = 0;
-            gameState.undos = 5;
             gameState.history = [];
             
             // 更新UI
             renderBoard('initial-board', gameState.currentBoard, true);
             
             document.getElementById('move-count').textContent = '0';
-            document.getElementById('undo-count').textContent = gameState.undos;
             updateInstruction('操作盘面已重置到初始状态');
         }
         
@@ -848,10 +761,13 @@
             });
             
             gameState.gameOver = true;
-            gameState.level++;
+            gameState.completedGames++;
             
             updateInstruction(`恭喜！完成目标！步数：${gameState.moves}`);
-            alert(`恭喜你完成任务！使用了 ${gameState.moves} 步操作。下一关：等级${gameState.level}`);
+            alert(`恭喜你完成任务！使用了 ${gameState.moves} 步操作。点击"新游戏"继续挑战`);
+            
+            // 更新已完成局数
+            document.getElementById('completed-games').textContent = gameState.completedGames;
             
             // 重置选择状态
             gameState.firstSelected = null;
