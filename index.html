@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>五行相生相克游戏</title>
+    <title>五行之谜</title>
     <style>
         * {
             margin: 0;
@@ -46,7 +46,7 @@
         
         .game-info {
             display: flex;
-            justify-content: space-around;
+            justify-content: center;
             padding: 10px;
             margin: 10px 0;
             background: rgba(255, 255, 255, 0.1);
@@ -56,11 +56,13 @@
         
         .info-item {
             text-align: center;
-            font-size: 1.2rem;
-            padding: 5px 15px;
+            font-size: 1.5rem;
+            padding: 8px 25px;
             border-radius: 8px;
             background: rgba(0, 150, 136, 0.3);
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            color: #ffeb3b;
+            font-weight: bold;
         }
         
         .game-container {
@@ -154,6 +156,8 @@
         #new-game-btn { background: linear-gradient(to right, #66bb6a, #4caf50); color: white; }
         #check-btn { background: linear-gradient(to right, #42a5f5, #2196f3); color: white; }
         #undo-btn { background: linear-gradient(to right, #ffca28, #ffc107); color: #212121; }
+        #random-btn { background: linear-gradient(to right, #ab47bc, #7b1fa2); color: white; }
+        #specify-btn { background: linear-gradient(to right, #26a69a, #00796b); color: white; }
         
         button:hover {
             transform: translateY(-4px);
@@ -243,26 +247,6 @@
             box-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
         }
         
-        .games-indicator {
-            background: linear-gradient(45deg, #ff4081, #7c4dff);
-            color: white;
-            padding: 8px 20px;
-            border-radius: 50px;
-            margin-top: 10px;
-            display: inline-block;
-        }
-        
-        .counter {
-            display: inline-block;
-            background: rgba(255, 64, 129, 0.3);
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            line-height: 30px;
-            text-align: center;
-            margin: 0 5px;
-        }
-        
         .local-actions {
             display: flex;
             gap: 15px;
@@ -289,6 +273,65 @@
         .board-title-container {
             flex-grow: 1;
         }
+        
+        .generate-actions {
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: #1a237e;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            border: 2px solid #4fc3f7;
+        }
+        
+        .modal h2 {
+            margin-bottom: 20px;
+            color: #4fc3f7;
+        }
+        
+        .modal input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 2px solid #29b6f6;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .modal-actions button {
+            min-width: 100px;
+        }
+        
+        #confirm-btn { background: linear-gradient(to right, #66bb6a, #4caf50); }
+        #cancel-btn { background: linear-gradient(to right, #ef5350, #f44336); }
         
         @media (max-width: 768px) {
             .board {
@@ -327,27 +370,32 @@
 </head>
 <body>
     <div class="header">
-        <h1>五行相生相克游戏</h1>
+        <h1>五行之谜</h1>
         <div class="game-info">
-            <div class="info-item">步数: <span id="move-count">0</span></div>
-            <div class="info-item">已完成局数: <span class="games-indicator"><span id="completed-games" class="counter">0</span></span></div>
+            <div class="info-item">题号: <span id="puzzle-id">无</span></div>
         </div>
     </div>
     
-    <div class="instructions">
-        <p id="instruction-text">请点击第一个元素...</p>
-        <div class="action-tip">提示：点击两个相邻元素应用五行规则</div>
+    <div class="actions generate-actions">
+        <button id="random-btn">随机生成</button>
+        <button id="specify-btn">指定题号</button>
     </div>
     
+    <div class="instructions">
+        <p id="instruction-text">请点击"随机生成"或"指定题号"按钮开始游戏</p>
+        <div class="action-tip">提示：点击两个相邻元素应用五行规则</div>
+    </div>
+
+    <div class="local-actions">
+        <button id="undo-btn">撤回操作</button>
+        <button id="reset-op-btn">重置盘面</button>
+    </div>
+
     <div class="game-container">
         <div class="board-container">
             <div class="board-header">
                 <div class="board-title-container">
                     <div class="board-title">操作盘面</div>
-                </div>
-                <div class="local-actions">
-                    <button id="undo-btn">撤回操作</button>
-                    <button id="reset-op-btn">重置盘面</button>
                 </div>
             </div>
             <div id="initial-board" class="board initial-board"></div>
@@ -364,14 +412,14 @@
         <button id="check-btn">检查完成</button>
     </div>
     
-    <div class="info-panel">
-        <h3>五行元素说明</h3>
-        <div class="element-info">
-            <div class="element-card metal-card metal">金 (金克木，金生水)</div>
-            <div class="element-card wood-card wood">木 (木克土，木生火)</div>
-            <div class="element-card water-card water">水 (水克火，水生木)</div>
-            <div class="element-card fire-card fire">火 (火克金，火生土)</div>
-            <div class="element-card earth-card earth">土 (土克水，土生金)</div>
+    <div id="specify-modal" class="modal">
+        <div class="modal-content">
+            <h2>请输入题号</h2>
+            <input type="number" id="puzzle-input" placeholder="输入1-1000之间的数字" min="1" max="1000">
+            <div class="modal-actions">
+                <button id="confirm-btn">确定</button>
+                <button id="cancel-btn">取消</button>
+            </div>
         </div>
     </div>
 
@@ -419,53 +467,64 @@
             targetBoard: [],
             firstSelected: null,
             moves: 0,
-            completedGames: 0,   // 已完成局数
+            puzzleId: null,      // 当前题号
             history: [],        // 操作历史
             gameOver: false,
             gameStartState: null  // 游戏开始时操作盘面的状态
         };
         
-        // 初始化游戏
+        // 创建空白棋盘
+        function createEmptyBoard() {
+            const board = [];
+            for (let row = 0; row < 5; row++) {
+                const rowArr = [];
+                for (let col = 0; col < 5; col++) {
+                    rowArr.push(null);
+                }
+                board.push(rowArr);
+            }
+            return board;
+        }
+        
+        // 初始化游戏（空白状态）
         function initGame() {
-            // 清空棋盘
-            document.getElementById('initial-board').innerHTML = '';
-            document.getElementById('target-board').innerHTML = '';
-            
-            // 生成初始状态
-            gameState.initialBoard = generateRandomBoard();
-            // 当前操作盘面初始化为初始状态
-            gameState.currentBoard = gameState.initialBoard.map(row => [...row]);
-            // 生成目标盘面
-            gameState.targetBoard = generateTargetBoard();
+            // 创建空白棋盘
+            gameState.initialBoard = createEmptyBoard();
+            gameState.currentBoard = createEmptyBoard();
+            gameState.targetBoard = createEmptyBoard();
             
             // 重置状态
             gameState.firstSelected = null;
             gameState.moves = 0;
             gameState.history = [];
             gameState.gameOver = false;
-            
-            // 保存游戏开始状态
-            gameState.gameStartState = JSON.parse(JSON.stringify(gameState.currentBoard));
+            gameState.gameStartState = null;
+            gameState.puzzleId = null;
             
             // 更新棋盘UI
             renderBoard('initial-board', gameState.currentBoard, true);
             renderBoard('target-board', gameState.targetBoard, false);
             
             // 更新指令文本
-            document.getElementById('instruction-text').textContent = '请点击第一个元素...';
-            document.getElementById('move-count').textContent = '0';
-            document.getElementById('completed-games').textContent = gameState.completedGames;
+            document.getElementById('instruction-text').textContent = '请点击"随机生成"或"指定题号"按钮开始游戏';
+            document.getElementById('puzzle-id').textContent = '无';
         }
         
         // 生成随机棋盘
-        function generateRandomBoard() {
+        function generateRandomBoard(seed) {
             const board = [];
             const elements = Object.keys(ELEMENTS);
+            
+            // 设置随机种子
+            Math.seed = seed;
             
             for (let row = 0; row < 5; row++) {
                 const rowArr = [];
                 for (let col = 0; col < 5; col++) {
-                    const randomElement = elements[Math.floor(Math.random() * elements.length)];
+                    // 使用种子生成伪随机数
+                    const randomValue = Math.sin(Math.seed++) * 10000;
+                    const randomFraction = randomValue - Math.floor(randomValue);
+                    const randomElement = elements[Math.floor(randomFraction * elements.length)];
                     rowArr.push(ELEMENTS[randomElement]);
                 }
                 board.push(rowArr);
@@ -474,7 +533,7 @@
         }
         
         // 生成目标棋盘
-        function generateTargetBoard() {
+        function generateTargetBoard(seed) {
             // 创建一个新盘面
             const board = [];
             
@@ -482,6 +541,9 @@
             for (let row = 0; row < 5; row++) {
                 board[row] = [...gameState.initialBoard[row]];
             }
+            
+            // 设置随机种子
+            Math.seed = seed;
             
             // 进行10次操作
             for (let i = 0; i < 10; i++) {
@@ -491,8 +553,15 @@
                 let attempts = 0;
                 
                 while (!valid && attempts < 100) {
-                    row = Math.floor(Math.random() * 5);
-                    col = Math.floor(Math.random() * 5);
+                    // 使用种子生成伪随机数
+                    const randomValue1 = Math.sin(Math.seed++) * 10000;
+                    const randomFraction1 = randomValue1 - Math.floor(randomValue1);
+                    
+                    const randomValue2 = Math.sin(Math.seed++) * 10000;
+                    const randomFraction2 = randomValue2 - Math.floor(randomValue2);
+                    
+                    row = Math.floor(randomFraction1 * 5);
+                    col = Math.floor(randomFraction1 * 100 % 5);
                     
                     // 随机选择一个相邻方向：上、下、左、右
                     const directions = [
@@ -502,7 +571,7 @@
                         {r: 0, c: 1}    // 右
                     ];
                     
-                    direction = directions[Math.floor(Math.random() * directions.length)];
+                    direction = directions[Math.floor(randomFraction2 * directions.length)];
                     
                     const newRow = row + direction.r;
                     const newCol = col + direction.c;
@@ -576,7 +645,7 @@
                     cell.dataset.row = row;
                     cell.dataset.col = col;
                     
-                    if (clickable) {
+                    if (clickable && gameState.puzzleId) {
                         cell.addEventListener('click', () => handleCellClick(row, col));
                     }
                     
@@ -587,7 +656,7 @@
         
         // 处理格子点击
         function handleCellClick(row, col) {
-            if (gameState.gameOver) return;
+            if (gameState.gameOver || !gameState.puzzleId) return;
             
             const cell = findCell(row, col, 'initial-board');
             
@@ -681,7 +750,6 @@
             
             // 成功操作
             gameState.moves++;
-            document.getElementById('move-count').textContent = gameState.moves;
             
             // 更新棋盘并添加动画效果
             renderBoard('initial-board', gameState.currentBoard, true);
@@ -711,7 +779,7 @@
         
         // 撤回操作
         function undoMove() {
-            if (gameState.gameOver) return;
+            if (gameState.gameOver || !gameState.puzzleId) return;
             if (gameState.history.length === 0) {
                 updateInstruction('无法撤回：没有操作历史');
                 return;
@@ -722,7 +790,6 @@
             gameState.moves--;
             
             renderBoard('initial-board', gameState.currentBoard, true);
-            document.getElementById('move-count').textContent = gameState.moves;
             updateInstruction('已撤回上一步操作');
             
             // 重置选择状态
@@ -731,7 +798,7 @@
         
         // 重置操作盘面到游戏初始状态
         function resetOperationBoard() {
-            if (gameState.gameOver) return;
+            if (gameState.gameOver || !gameState.puzzleId) return;
             
             // 恢复为游戏开始状态
             gameState.currentBoard = JSON.parse(JSON.stringify(gameState.gameStartState));
@@ -741,7 +808,6 @@
             // 更新UI
             renderBoard('initial-board', gameState.currentBoard, true);
             
-            document.getElementById('move-count').textContent = '0';
             updateInstruction('操作盘面已重置到初始状态');
         }
         
@@ -761,13 +827,9 @@
             });
             
             gameState.gameOver = true;
-            gameState.completedGames++;
             
-            updateInstruction(`恭喜！完成目标！步数：${gameState.moves}`);
+            updateInstruction(`恭喜！完成目标！`);
             alert(`恭喜你完成任务！使用了 ${gameState.moves} 步操作。点击"新游戏"继续挑战`);
-            
-            // 更新已完成局数
-            document.getElementById('completed-games').textContent = gameState.completedGames;
             
             // 重置选择状态
             gameState.firstSelected = null;
@@ -777,15 +839,68 @@
         
         // 手动检查胜利
         function manualCheckWin() {
+            if (!gameState.puzzleId) {
+                alert('请先生成题目');
+                return;
+            }
             if (checkWin()) {
                 return;
             }
             alert('尚未完成目标，请继续努力！');
         }
         
+        // 生成新题目
+        function generatePuzzle(seed) {
+            // 设置题号
+            gameState.puzzleId = seed;
+            document.getElementById('puzzle-id').textContent = seed;
+            
+            // 生成初始状态
+            gameState.initialBoard = generateRandomBoard(seed);
+            // 当前操作盘面初始化为初始状态
+            gameState.currentBoard = gameState.initialBoard.map(row => [...row]);
+            // 生成目标盘面
+            gameState.targetBoard = generateTargetBoard(seed);
+            
+            // 重置状态
+            gameState.firstSelected = null;
+            gameState.moves = 0;
+            gameState.history = [];
+            gameState.gameOver = false;
+            
+            // 保存游戏开始状态
+            gameState.gameStartState = JSON.parse(JSON.stringify(gameState.currentBoard));
+            
+            // 更新棋盘UI
+            renderBoard('initial-board', gameState.currentBoard, true);
+            renderBoard('target-board', gameState.targetBoard, false);
+            
+            // 更新指令文本
+            document.getElementById('instruction-text').textContent = '请点击第一个元素...';
+        }
+        
+        // 随机生成题目
+        function generateRandomPuzzle() {
+            // 生成1-1000之间的随机整数
+            const seed = Math.floor(Math.random() * 1000) + 1;
+            generatePuzzle(seed);
+        }
+        
+        // 显示题号输入模态框
+        function showPuzzleModal() {
+            document.getElementById('specify-modal').style.display = 'flex';
+            document.getElementById('puzzle-input').value = '';
+            document.getElementById('puzzle-input').focus();
+        }
+        
+        // 隐藏题号输入模态框
+        function hidePuzzleModal() {
+            document.getElementById('specify-modal').style.display = 'none';
+        }
+        
         // 页面加载完成后初始化游戏
         document.addEventListener('DOMContentLoaded', () => {
-            // 初始化游戏
+            // 初始化空白游戏
             initGame();
             
             // 绑定按钮事件
@@ -793,6 +908,18 @@
             document.getElementById('reset-op-btn').addEventListener('click', resetOperationBoard);
             document.getElementById('new-game-btn').addEventListener('click', initGame);
             document.getElementById('check-btn').addEventListener('click', manualCheckWin);
+            document.getElementById('random-btn').addEventListener('click', generateRandomPuzzle);
+            document.getElementById('specify-btn').addEventListener('click', showPuzzleModal);
+            document.getElementById('confirm-btn').addEventListener('click', function() {
+                const puzzleId = parseInt(document.getElementById('puzzle-input').value);
+                if (puzzleId >= 1 && puzzleId <= 1000) {
+                    generatePuzzle(puzzleId);
+                    hidePuzzleModal();
+                } else {
+                    alert('请输入1到1000之间的有效数字');
+                }
+            });
+            document.getElementById('cancel-btn').addEventListener('click', hidePuzzleModal);
         });
     </script>
 </body>
