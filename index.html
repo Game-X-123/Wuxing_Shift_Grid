@@ -1233,7 +1233,53 @@
         function hidePuzzleModal() {
             document.getElementById('specify-modal').style.display = 'none';
         }
-         
+        
+        // 显示答案模态框
+        function showAnswerModal() {
+            if (!gameState.puzzleId) {
+                alert('请先生成题目');
+                return;
+            }
+            
+            if (gameState.answerSteps.length === 0) {
+                alert('没有找到解题步骤');
+                return;
+            }
+            
+            // 渲染答案步骤
+            renderAnswerSteps();
+            
+            // 显示模态框
+            document.getElementById('answer-modal').style.display = 'flex';
+        }
+        
+        // 渲染答案步骤
+        function renderAnswerSteps() {
+            const container = document.getElementById('answer-steps-container');
+            container.innerHTML = '';
+            
+            gameState.answerSteps.forEach((step, index) => {
+                const stepItem = document.createElement('div');
+                stepItem.className = 'step-item';
+                stepItem.innerHTML = `
+                    <div class="step-number">${index + 1}</div>
+                    <span class="step-action">操作：</span>
+                    点击位置<span class="step-position">(${step.from.row+1},${step.from.col+1})</span>
+                    <span class="step-element ${ELEMENT_MAP[step.element1]}">${step.element1}</span>
+                    和位置<span class="step-position">(${step.to.row+1},${step.to.col+1})</span>
+                    <span class="step-element ${ELEMENT_MAP[step.element2]}">${step.element2}</span>
+                    <div class="step-result">${step.result}</div>
+                `;
+                
+                // 添加点击高亮效果
+                stepItem.addEventListener('click', () => {
+                    highlightStep(step);
+                });
+                
+                container.appendChild(stepItem);
+            });
+        }
+        
         // 高亮显示步骤对应的棋盘位置
         function highlightStep(step) {
             // 清除之前的高亮
