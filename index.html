@@ -365,15 +365,17 @@
             .local-actions {
                 width: 100%;
             }
+            
+            .info-item {
+                font-size: 1.3rem;
+                padding: 8px 15px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>五行之谜</h1>
-        <div class="game-info">
-            <div class="info-item">题号: <span id="puzzle-id">无</span></div>
-        </div>
     </div>
     
     <div class="actions generate-actions">
@@ -385,6 +387,11 @@
         <p id="instruction-text">请点击"随机生成"或"指定题号"按钮开始游戏</p>
         <div class="action-tip">提示：点击两个相邻元素应用五行规则</div>
     </div>
+
+        <div class="game-info">
+            <div class="info-item">题号: <span id="puzzle-id">无</span></div>
+            <div class="info-item">步数: <span id="moves-count">0</span></div>
+        </div>
 
     <div class="local-actions">
         <button id="undo-btn">撤回操作</button>
@@ -508,6 +515,14 @@
             // 更新指令文本
             document.getElementById('instruction-text').textContent = '请点击"随机生成"或"指定题号"按钮开始游戏';
             document.getElementById('puzzle-id').textContent = '无';
+            
+            // 更新步数显示
+            updateMovesDisplay();
+        }
+        
+        // 更新步数显示
+        function updateMovesDisplay() {
+            document.getElementById('moves-count').textContent = gameState.moves;
         }
         
         // 生成随机棋盘
@@ -655,46 +670,65 @@
         }
         
         // 处理格子点击
-        function handleCellClick(row, col) {
-            if (gameState.gameOver || !gameState.puzzleId) return;
-            
-            const cell = findCell(row, col, 'initial-board');
-            
-            // 第一次选择或重新选择
-            if (!gameState.firstSelected) {
-                gameState.firstSelected = {row, col};
-                cell.classList.add('selected');
-                updateInstruction(`已选择 ${gameState.currentBoard[row][col]}，请点击相邻元素`);
-            } 
-            // 第二次选择
-            else {
-                const first = gameState.firstSelected;
-                const second = {row, col};
-                
-                // 检查是否选择相同的格子
-                if (first.row === second.row && first.col === second.col) {
-                    updateInstruction('不能选择相同的格子，请重新选择');
-                    return;
-                }
-                
-                // 保存操作前状态（用于撤回）
-                saveGameState();
-                
-                // 检查是否相邻
-                if (isAdjacent(first, second)) {
-                    // 应用游戏规则
-                    applyRules(first, second);
-                } else {
-                    updateInstruction('位置不相邻，请重新选择第一元素');
-                }
-                
-                // 重置选择状态
-                const firstCell = findCell(first.row, first.col, 'initial-board');
-                if (firstCell) firstCell.classList.remove('selected');
-                gameState.firstSelected = null;
-            }
+    function handleCellClick(row, col) {
+        if (gameState.gameOver || !gameState.puzzleId) return;
+        
+        const cell = findCell(row, col, 'initial-board');
+        
+        // 如果已经选中了该格子 - 取消选择
+        if (gameState.firstSelected && 
+            gameState.firstSelected.row === row && 
+            gameState.firstSelected.col === col) {
+            cell.classList.remove('selected');
+            gameState.firstSelected = null;
+            updateInstruction('已取消选择，请重新选择第一个元素');
+            return;
         }
         
+        // 第一次选择或重新选择
+        if (!gameState.firstSelected) {
+            // 如果格子为空，不能选择
+            if (!gameState.currentBoard[row][col]) {
+                updateInstruction('不能选择空格子');
+                return;
+            }
+            
+            gameState.firstSelected = {row, col};
+            cell.classList.add('selected');
+            updateInstruction(`已选择 ${gameState.currentBoard[row][col]}，请点击相邻元素（再次点击可取消）`);
+        } 
+        // 第二次选择（不同格子）
+        else {
+            const first = gameState.firstSelected;
+            const second = {row, col};
+            
+            // 检查是否相邻
+            if (isAdjacent(first, second)) {
+                // 应用游戏规则前保存状态
+                saveGameState();
+                
+                // 应用游戏规则并获取操作是否有效
+                const isValidMove = applyRules(first, second);
+                
+                if (!isValidMove) {
+                    // 无效操作，移除刚刚保存的状态
+                    gameState.history.pop();
+                } else {
+                    // 有效操作，增加步数并更新显示
+                    gameState.moves++;
+                    updateMovesDisplay();
+                }
+            } else {
+                updateInstruction('位置不相邻，请重新选择第一元素');
+            }
+            
+            // 重置选择状态（无论操作是否成功）
+            const firstCell = findCell(first.row, first.col, 'initial-board');
+            if (firstCell) firstCell.classList.remove('selected');
+            gameState.firstSelected = null;
+        }
+    }
+
         // 检查两个格子是否相邻
         function isAdjacent(first, second) {
             const rowDiff = Math.abs(first.row - second.row);
@@ -703,61 +737,59 @@
         }
         
         // 应用游戏规则
-        function applyRules(first, second) {
-            const board = gameState.currentBoard;
-            const element1 = board[first.row][first.col];
-            const element2 = board[second.row][second.col];
-            
-            if (!element1 || !element2) {
-                updateInstruction('无效操作：请选择有元素的格子');
-                return;
-            }
-            
-            // 相同元素
-            if (element1 === element2) {
-                const elemType = Object.keys(ELEMENTS).find(key => ELEMENTS[key] === element1);
-                board[first.row][first.col] = null;
-                board[second.row][second.col] = ELEMENTS[GENERATE_RELATIONS[elemType]];
-                updateInstruction(`相生操作：在${element2}位置生成${board[second.row][second.col]}`);
-            } 
-            // 相克关系
-            else if (RESTRAIN_RELATIONS[ELEMENT_MAP[element1]] === ELEMENT_MAP[element2]) {
-                board[second.row][second.col] = element1;
-                board[first.row][first.col] = null;
-                updateInstruction(`相克操作：${element1}克制${element2}`);
-            } 
-            else if (RESTRAIN_RELATIONS[ELEMENT_MAP[element2]] === ELEMENT_MAP[element1]) {
-                board[second.row][second.col] = element2;
-                board[first.row][first.col] = null;
-                updateInstruction(`相克操作：${element2}克制${element1}`);
-            }
-            // 相生关系
-            else if (GENERATE_RELATIONS[ELEMENT_MAP[element1]] === ELEMENT_MAP[element2]) {
-                // 交换位置
-                [board[first.row][first.col], board[second.row][second.col]] = [element2, element1];
-                updateInstruction(`相生操作：${element1}和${element2}交换位置`);
-            } 
-            else if (GENERATE_RELATIONS[ELEMENT_MAP[element2]] === ELEMENT_MAP[element1]) {
-                // 交换位置
-                [board[first.row][first.col], board[second.row][second.col]] = [element2, element1];
-                updateInstruction(`相生操作：${element2}和${element1}交换位置`);
-            } 
-            // 无效操作
-            else {
-                updateInstruction('无效操作：不符合五行规则');
-                return;
-            }
-            
-            // 成功操作
-            gameState.moves++;
-            
-            // 更新棋盘并添加动画效果
-            renderBoard('initial-board', gameState.currentBoard, true);
-            
-            // 检查是否胜利
-            setTimeout(checkWin, 200);
-        }
-        
+function applyRules(first, second) {
+    const board = gameState.currentBoard;
+    const element1 = board[first.row][first.col];
+    const element2 = board[second.row][second.col];
+    
+    if (!element1 || !element2) {
+        updateInstruction('无效操作：请选择有元素的格子');
+        return false; // 返回操作是否有效的标识
+    }
+    
+    // 相同元素
+    if (element1 === element2) {
+        const elemType = Object.keys(ELEMENTS).find(key => ELEMENTS[key] === element1);
+        board[first.row][first.col] = null;
+        board[second.row][second.col] = ELEMENTS[GENERATE_RELATIONS[elemType]];
+        updateInstruction(`相生操作：在${element2}位置生成${board[second.row][second.col]}`);
+    } 
+    // 相克关系
+    else if (RESTRAIN_RELATIONS[ELEMENT_MAP[element1]] === ELEMENT_MAP[element2]) {
+        board[second.row][second.col] = element1;
+        board[first.row][first.col] = null;
+        updateInstruction(`相克操作：${element1}克制${element2}`);
+    } 
+    else if (RESTRAIN_RELATIONS[ELEMENT_MAP[element2]] === ELEMENT_MAP[element1]) {
+        board[second.row][second.col] = element2;
+        board[first.row][first.col] = null;
+        updateInstruction(`相克操作：${element2}克制${element1}`);
+    }
+    // 相生关系
+    else if (GENERATE_RELATIONS[ELEMENT_MAP[element1]] === ELEMENT_MAP[element2]) {
+        // 交换位置
+        [board[first.row][first.col], board[second.row][second.col]] = [element2, element1];
+        updateInstruction(`相生操作：${element1}和${element2}交换位置`);
+    } 
+    else if (GENERATE_RELATIONS[ELEMENT_MAP[element2]] === ELEMENT_MAP[element1]) {
+        // 交换位置
+        [board[first.row][first.col], board[second.row][second.col]] = [element2, element1];
+        updateInstruction(`相生操作：${element2}和${element1}交换位置`);
+    } 
+    // 无效操作
+    else {
+        updateInstruction('无效操作：不符合五行规则');
+        return false; // 无效操作
+    }
+    
+    // 更新棋盘
+    renderBoard('initial-board', gameState.currentBoard, true);
+    
+    // 有效操作，检查是否胜利
+    setTimeout(checkWin, 200);
+    return true;
+}
+
         // 更新指令文本
         function updateInstruction(text) {
             document.getElementById('instruction-text').textContent = text;
@@ -778,23 +810,25 @@
         }
         
         // 撤回操作
-        function undoMove() {
-            if (gameState.gameOver || !gameState.puzzleId) return;
-            if (gameState.history.length === 0) {
-                updateInstruction('无法撤回：没有操作历史');
-                return;
-            }
-            
-            const prevState = JSON.parse(gameState.history.pop());
-            gameState.currentBoard = prevState;
-            gameState.moves--;
-            
-            renderBoard('initial-board', gameState.currentBoard, true);
-            updateInstruction('已撤回上一步操作');
-            
-            // 重置选择状态
-            gameState.firstSelected = null;
-        }
+function undoMove() {
+    if (gameState.gameOver || !gameState.puzzleId) return;
+    if (gameState.history.length === 0) {
+        updateInstruction('无法撤回：没有操作历史');
+        return;
+    }
+    
+    // 恢复之前的状态并减少步数
+    const prevState = JSON.parse(gameState.history.pop());
+    gameState.currentBoard = prevState;
+    gameState.moves--;
+    updateMovesDisplay();  // 更新步数显示
+    
+    renderBoard('initial-board', gameState.currentBoard, true);
+    updateInstruction('已撤回上一步操作');
+    
+    // 重置选择状态
+    gameState.firstSelected = null;
+}
         
         // 重置操作盘面到游戏初始状态
         function resetOperationBoard() {
@@ -803,6 +837,7 @@
             // 恢复为游戏开始状态
             gameState.currentBoard = JSON.parse(JSON.stringify(gameState.gameStartState));
             gameState.moves = 0;
+            updateMovesDisplay();  // 更新步数显示
             gameState.history = [];
             
             // 更新UI
@@ -849,6 +884,11 @@
             alert('尚未完成目标，请继续努力！');
         }
         
+        // 更新步数显示
+        function updateMovesDisplay() {
+            document.getElementById('moves-count').textContent = gameState.moves;
+        }
+        
         // 生成新题目
         function generatePuzzle(seed) {
             // 设置题号
@@ -865,6 +905,7 @@
             // 重置状态
             gameState.firstSelected = null;
             gameState.moves = 0;
+            updateMovesDisplay();  // 更新步数显示
             gameState.history = [];
             gameState.gameOver = false;
             
