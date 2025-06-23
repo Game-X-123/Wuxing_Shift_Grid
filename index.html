@@ -396,115 +396,6 @@
         #confirm-btn { background: linear-gradient(to right, #66bb6a, #4caf50); }
         #cancel-btn { background: linear-gradient(to right, #ef5350, #f44336); }
         
-        /* 答案模态框样式 */
-        #answer-modal .modal-content {
-            max-width: 800px;
-            padding: 20px;
-        }
-        
-        .answer-steps {
-            max-height: 60vh;
-            overflow-y: auto;
-            margin: 20px 0;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-        }
-        
-        .step-item {
-            padding: 12px;
-            margin: 8px 0;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            font-size: 1.1rem;
-            text-align: left;
-            position: relative;
-            transition: all 0.3s;
-        }
-        
-        .step-item:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateX(5px);
-        }
-        
-        .step-highlight {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 235, 59, 0.2);
-            border-radius: 8px;
-            z-index: -1;
-            animation: highlight 2s ease;
-        }
-        
-        @keyframes highlight {
-            0% { opacity: 1; }
-            100% { opacity: 0; }
-        }
-        
-        .step-number {
-            display: inline-block;
-            width: 30px;
-            height: 30px;
-            background: #4fc3f7;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 30px;
-            margin-right: 10px;
-            font-weight: bold;
-        }
-        
-        .step-action {
-            color: #81d4fa;
-            font-weight: bold;
-        }
-        
-        .step-position {
-            color: #ffeb3b;
-            font-weight: bold;
-        }
-        
-        .step-element {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 5px;
-            margin: 0 5px;
-            font-weight: bold;
-        }
-        
-        .step-element.metal { background: radial-gradient(circle at 30% 30%, #e0e0e0, #b3b3b3, #757575); }
-        .step-element.wood { background: radial-gradient(circle at 30% 30%, #a5d6a7, #66bb6a, #2e7d32); }
-        .step-element.water { background: radial-gradient(circle at 30% 30%, #81d4fa, #29b6f6, #0288d1); }
-        .step-element.fire { background: radial-gradient(circle at 30% 30%, #ffcc80, #ffa726, #f57c00); }
-        .step-element.earth { background: radial-gradient(circle at 30% 30%, #d7ccc8, #a1887f, #795548); }
-        
-        .step-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .step-buttons button {
-            min-width: 100px;
-            padding: 8px 15px;
-            font-size: 1rem;
-        }
-        
-        #prev-step-btn { background: linear-gradient(to right, #42a5f5, #2196f3); }
-        #next-step-btn { background: linear-gradient(to right, #66bb6a, #4caf50); }
-        #close-answer-btn { background: linear-gradient(to right, #ab47bc, #7b1fa2); }
-        
-        .step-result {
-            margin-top: 5px;
-            padding: 5px;
-            border-top: 1px dashed rgba(255, 255, 255, 0.2);
-            font-style: italic;
-            color: #a5d6a7;
-        }
-        
         @media (max-width: 768px) {
             .board {
                 grid-template-columns: repeat(5, 55px);
@@ -632,24 +523,6 @@
         </div>
     </div>
     
-    <!-- 新增：答案模态框 -->
-    <div id="answer-modal" class="modal">
-        <div class="modal-content">
-            <h2>解题步骤</h2>
-            <p>从初始盘面到目标盘面的10个操作步骤：</p>
-            
-            <div class="answer-steps" id="answer-steps-container">
-                <!-- 步骤将在这里动态生成 -->
-            </div>
-            
-            <div class="step-buttons">
-                <button id="prev-step-btn">上一步</button>
-                <button id="next-step-btn">下一步</button>
-                <button id="close-answer-btn">关闭</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         // 五行元素和对应符号
         const ELEMENTS = {
@@ -1234,108 +1107,8 @@
             document.getElementById('specify-modal').style.display = 'none';
         }
         
-        // 显示答案模态框
-        function showAnswerModal() {
-            if (!gameState.puzzleId) {
-                alert('请先生成题目');
-                return;
-            }
-            
-            if (gameState.answerSteps.length === 0) {
-                alert('没有找到解题步骤');
-                return;
-            }
-            
-            // 渲染答案步骤
-            renderAnswerSteps();
-            
-            // 显示模态框
-            document.getElementById('answer-modal').style.display = 'flex';
-        }
-        
-        // 渲染答案步骤
-        function renderAnswerSteps() {
-            const container = document.getElementById('answer-steps-container');
-            container.innerHTML = '';
-            
-            gameState.answerSteps.forEach((step, index) => {
-                const stepItem = document.createElement('div');
-                stepItem.className = 'step-item';
-                stepItem.innerHTML = `
-                    <div class="step-number">${index + 1}</div>
-                    <span class="step-action">操作：</span>
-                    点击位置<span class="step-position">(${step.from.row+1},${step.from.col+1})</span>
-                    <span class="step-element ${ELEMENT_MAP[step.element1]}">${step.element1}</span>
-                    和位置<span class="step-position">(${step.to.row+1},${step.to.col+1})</span>
-                    <span class="step-element ${ELEMENT_MAP[step.element2]}">${step.element2}</span>
-                    <div class="step-result">${step.result}</div>
-                `;
-                
-                // 添加点击高亮效果
-                stepItem.addEventListener('click', () => {
-                    highlightStep(step);
-                });
-                
-                container.appendChild(stepItem);
-            });
-        }
-        
-        // 高亮显示步骤对应的棋盘位置
-        function highlightStep(step) {
-            // 清除之前的高亮
-            document.querySelectorAll('.cell').forEach(cell => {
-                cell.classList.remove('selected');
-            });
-            
-            // 高亮第一个位置
-            const fromCell = findCell(step.from.row, step.from.col, 'initial-board');
-            if (fromCell) {
-                fromCell.classList.add('selected');
-                fromCell.classList.add('animation');
-                setTimeout(() => {
-                    fromCell.classList.remove('animation');
-                }, 500);
-            }
-            
-            // 高亮第二个位置
-            const toCell = findCell(step.to.row, step.to.col, 'initial-board');
-            if (toCell) {
-                toCell.classList.add('selected');
-                toCell.classList.add('animation');
-                setTimeout(() => {
-                    toCell.classList.remove('animation');
-                }, 500);
-            }
-            
-            // 在步骤项上添加高亮效果
-            const stepItems = document.querySelectorAll('.step-item');
-            stepItems.forEach(item => {
-                item.classList.remove('highlighted');
-            });
-            
-            const stepIndex = gameState.answerSteps.findIndex(s => 
-                s.from.row === step.from.row && 
-                s.from.col === step.from.col &&
-                s.to.row === step.to.row && 
-                s.to.col === step.to.col
-            );
-            
-            if (stepIndex !== -1) {
-                stepItems[stepIndex].classList.add('highlighted');
-                
-                // 添加临时高亮动画
-                const highlight = document.createElement('div');
-                highlight.className = 'step-highlight';
-                stepItems[stepIndex].appendChild(highlight);
-                
-                // 动画结束后移除元素
-                setTimeout(() => {
-                    highlight.remove();
-                }, 2000);
-            }
-        }
-        
-        // 页面加载完成后初始化游戏
+
+          // 页面加载完成后初始化游戏
         document.addEventListener('DOMContentLoaded', () => {
             // 初始化空白游戏
             initGame();
@@ -1347,7 +1120,6 @@
             document.getElementById('check-btn').addEventListener('click', manualCheckWin);
             document.getElementById('random-btn').addEventListener('click', generateRandomPuzzle);
             document.getElementById('specify-btn').addEventListener('click', showPuzzleModal);
-            document.getElementById('show-answer-btn').addEventListener('click', showAnswerModal);
             document.getElementById('confirm-btn').addEventListener('click', function() {
                 const puzzleId = parseInt(document.getElementById('puzzle-input').value);
                 if (puzzleId >= 1 && puzzleId <= 1000) {
@@ -1358,11 +1130,6 @@
                 }
             });
             document.getElementById('cancel-btn').addEventListener('click', hidePuzzleModal);
-            
-            // 关闭答案模态框按钮
-            document.getElementById('close-answer-btn').addEventListener('click', function() {
-                document.getElementById('answer-modal').style.display = 'none';
-            });
             
             // 关闭挑战成功横幅
             document.querySelector('.close-banner').addEventListener('click', function() {
