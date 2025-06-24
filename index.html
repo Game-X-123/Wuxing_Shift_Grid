@@ -395,7 +395,7 @@
         
         #confirm-btn { background: linear-gradient(to right, #66bb6a, #4caf50); }
         #cancel-btn { background: linear-gradient(to right, #ef5350, #f44336); }
-        
+                
         @media (max-width: 768px) {
             .board {
                 grid-template-columns: repeat(5, 55px);
@@ -522,7 +522,7 @@
             </div>
         </div>
     </div>
-    
+
     <script>
         // 五行元素和对应符号
         const ELEMENTS = {
@@ -715,8 +715,10 @@
                     const newRow = row + direction.r;
                     const newCol = col + direction.c;
                     
-                    // 检查是否在边界内
-                    if (newRow >= 0 && newRow < 5 && newCol >= 0 && newCol < 5) {
+                    // 检查是否在边界内且两个位置都有元素
+                    if (newRow >= 0 && newRow < 5 && newCol >= 0 && newCol < 5 && 
+                        board[row][col] && board[newRow][newCol]) {
+                        
                         valid = true;
                         
                         // 应用规则（模拟操作）
@@ -1107,8 +1109,7 @@
             document.getElementById('specify-modal').style.display = 'none';
         }
         
-
-          // 页面加载完成后初始化游戏
+        // 页面加载完成后初始化游戏
         document.addEventListener('DOMContentLoaded', () => {
             // 初始化空白游戏
             initGame();
@@ -1130,7 +1131,7 @@
                 }
             });
             document.getElementById('cancel-btn').addEventListener('click', hidePuzzleModal);
-            
+
             // 关闭挑战成功横幅
             document.querySelector('.close-banner').addEventListener('click', function() {
                 document.getElementById('win-banner').style.display = 'none';
