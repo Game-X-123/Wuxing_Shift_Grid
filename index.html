@@ -193,6 +193,8 @@
             flex-direction: column;
             width: 100%;
             max-width: 400px;
+            /* 修改：添加以下属性使棋盘居中 */
+            align-items: center;
         }
         
         .board-title {
@@ -204,6 +206,8 @@
             background: rgba(33, 33, 33, 0.5);
             border-radius: 8px;
             border: 1px solid rgba(100, 255, 255, 0.4);
+            /* 修改：确保标题也居中 */
+            width: 100%;
         }
         
         .board {
@@ -211,6 +215,8 @@
             grid-template-columns: repeat(5, 70px);
             grid-template-rows: repeat(5, 70px);
             gap: 8px;
+            /* 修改：添加以下属性使棋盘居中 */
+            justify-content: center;
         }
         
         .cell {
@@ -279,59 +285,6 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
         
-        .instructions {
-            margin: 15px 0;
-            font-weight: bold;
-            font-size: 1.3rem;
-            background: rgba(255, 255, 255, 0.15);
-            padding: 15px 25px;
-            border-radius: 50px;
-            text-align: center;
-            width: 100%;
-            max-width: 700px;
-            border: 1px solid rgba(100, 255, 255, 0.4);
-        }
-        
-        .info-panel {
-            margin: 20px 0;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 15px;
-            width: 100%;
-            max-width: 900px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-        
-        .element-info {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 15px;
-            flex-wrap: wrap;
-        }
-        
-        .element-card {
-            width: 120px;
-            padding: 12px;
-            border-radius: 10px;
-            text-align: center;
-            background: rgba(0, 0, 0, 0.3);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            font-size: 1.1rem;
-            transition: transform 0.3s;
-        }
-        
-        .element-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .metal-card { border: 2px solid #b3b3b3; }
-        .wood-card { border: 2px solid #66bb6a; }
-        .water-card { border: 2px solid #29b6f6; }
-        .fire-card { border: 2px solid #ffa726; }
-        .earth-card { border: 2px solid #a1887f; }
-        
         .selected {
             box-shadow: 0 0 0 4px #ffeb3b, inset 0 0 20px rgba(255, 235, 59, 0.8);
         }
@@ -379,6 +332,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
+            /* 修改：确保标题区域宽度100% */
+            width: 100%;
         }
         
         .board-title-container {
@@ -458,12 +413,6 @@
                 gap: 20px;
             }
             
-            .element-card {
-                width: 100px;
-                padding: 8px;
-                font-size: 1rem;
-            }
-            
             h1 {
                 font-size: 2.2rem;
             }
@@ -530,11 +479,6 @@
         <button id="specify-btn">指定题号</button>
     </div>
     
-    <div class="instructions">
-        <p id="instruction-text">请点击"随机生成"或"指定题号"按钮开始游戏</p>
-        <div class="action-tip">提示：点击两个相邻元素应用五行规则</div>
-    </div>
-
     <div class="game-info">
         <div class="info-item">题号: <span id="puzzle-id">无</span></div>
         <div class="info-item">步数: <span id="moves-count">0</span></div>
@@ -566,7 +510,7 @@
     </div>
     
     <div class="actions">
-        <button id="check-btn">检查完成</button>
+        <button id="check-btn">提交</button>
     </div>
     
     <div id="specify-modal" class="modal">
@@ -671,8 +615,7 @@
             renderBoard('initial-board', gameState.currentBoard, true);
             renderBoard('target-board', gameState.targetBoard, false);
             
-            // 更新指令文本
-            document.getElementById('instruction-text').textContent = '请点击"随机生成"或"指定题号"按钮开始游戏';
+            // 更新题号显示
             document.getElementById('puzzle-id').textContent = '无';
             
             // 更新步数显示
@@ -708,7 +651,7 @@
         
         // 生成6位线索字母串（基于题号）
         function generateClueString(seed) {
-            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const letters = 'abcdefghijklmnopqrstuvwxyz';
             let clue = '';
             
             // 使用题号作为随机种子
@@ -911,7 +854,6 @@
                 gameState.firstSelected.col === col) {
                 cell.classList.remove('selected');
                 gameState.firstSelected = null;
-                updateInstruction('已取消选择，请重新选择第一个元素');
                 return;
             }
             
@@ -925,7 +867,6 @@
                 
                 gameState.firstSelected = {row, col};
                 cell.classList.add('selected');
-                updateInstruction(`已选择 ${gameState.currentBoard[row][col]}，请点击相邻元素（再次点击可取消）`);
             } 
             // 第二次选择（不同格子）
             else {
@@ -949,7 +890,7 @@
                         updateMovesDisplay();
                     }
                 } else {
-                    updateInstruction('位置不相邻，请重新选择第一元素');
+                    showMessage('位置不相邻，请重新选择第一元素', 'warning');
                 }
                 
                 // 重置选择状态（无论操作是否成功）
@@ -982,29 +923,24 @@
                 const elemType = Object.keys(ELEMENTS).find(key => ELEMENTS[key] === element1);
                 board[first.row][first.col] = null;
                 board[second.row][second.col] = ELEMENTS[GENERATE_RELATIONS[elemType]];
-                updateInstruction(`相生操作：在${element2}位置生成${board[second.row][second.col]}`);
             } 
             // 相克关系
             else if (RESTRAIN_RELATIONS[ELEMENT_MAP[element1]] === ELEMENT_MAP[element2]) {
                 board[second.row][second.col] = element1;
                 board[first.row][first.col] = null;
-                updateInstruction(`相克操作：${element1}克制${element2}`);
             } 
             else if (RESTRAIN_RELATIONS[ELEMENT_MAP[element2]] === ELEMENT_MAP[element1]) {
                 board[second.row][second.col] = element2;
                 board[first.row][first.col] = null;
-                updateInstruction(`相克操作：${element2}克制${element1}`);
             }
             // 相生关系
             else if (GENERATE_RELATIONS[ELEMENT_MAP[element1]] === ELEMENT_MAP[element2]) {
                 // 交换位置
                 [board[first.row][first.col], board[second.row][second.col]] = [element2, element1];
-                updateInstruction(`相生操作：${element1}和${element2}交换位置`);
             } 
             else if (GENERATE_RELATIONS[ELEMENT_MAP[element2]] === ELEMENT_MAP[element1]) {
                 // 交换位置
                 [board[first.row][first.col], board[second.row][second.col]] = [element2, element1];
-                updateInstruction(`相生操作：${element2}和${element1}交换位置`);
             } 
             // 无效操作
             else {
@@ -1021,11 +957,6 @@
             return true;
         }
 
-        // 更新指令文本
-        function updateInstruction(text) {
-            document.getElementById('instruction-text').textContent = text;
-        }
-        
         // 查找对应的单元格
         function findCell(row, col, boardId) {
             return document.querySelector(`#${boardId} .cell[data-row="${row}"][data-col="${col}"]`);
@@ -1055,7 +986,6 @@
             updateMovesDisplay();  // 更新步数显示
             
             renderBoard('initial-board', gameState.currentBoard, true);
-            updateInstruction('已撤回上一步操作');
             
             // 重置选择状态
             gameState.firstSelected = null;
@@ -1077,8 +1007,6 @@
             // 更新UI
             renderBoard('initial-board', gameState.currentBoard, true);
             
-            updateInstruction('操作盘面已重置到初始状态');
-            
             // 重置放大状态
             gameState.zoomedCell = null;
         }
@@ -1099,9 +1027,6 @@
             });
             
             gameState.gameOver = true;
-            
-            // 更新指令文本
-            updateInstruction(`恭喜！完成目标！`);
             
             // 显示挑战成功横幅
             showWinBanner();
@@ -1174,9 +1099,6 @@
             renderBoard('initial-board', gameState.currentBoard, true);
             renderBoard('target-board', gameState.targetBoard, false);
             
-            // 更新指令文本
-            document.getElementById('instruction-text').textContent = '请点击第一个元素...';
-            
             // 隐藏胜利横幅
             document.getElementById('win-banner').style.display = 'none';
         }
@@ -1234,11 +1156,11 @@
             document.getElementById('specify-btn').addEventListener('click', showPuzzleModal);
             document.getElementById('confirm-btn').addEventListener('click', function() {
                 const puzzleId = parseInt(document.getElementById('puzzle-input').value);
-                if (puzzleId >= 1 && puzzleId <= 1000) {
+                if (puzzleId >= 1 && puzzleId <= 999) {
                     generatePuzzle(puzzleId);
                     hidePuzzleModal();
                 } else {
-                    showMessage('请输入1到1000之间的有效数字', 'error');
+                    showMessage('请输入1到999之间的有效数字', 'error');
                 }
             });
             document.getElementById('cancel-btn').addEventListener('click', hidePuzzleModal);
